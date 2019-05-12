@@ -1,0 +1,7 @@
+#Python
+*.pyc
+__pycache__
+
+#3rd-party
+libsvm-3.23
+*.zip
