@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 
 # Global libs
-import sys
-import os
 from argparse import ArgumentParser
 import numpy as np
 import scipy.spatial.distance as ssd
 import matplotlib.pyplot as plt
 
-#Add libsvm to current environment path
-sd = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(sd + '/libsvm-3.23/python/')
-sys.path.append(sd + '/libsvm-3.23/windows/')
-from svmutil import *  #requires dll!!!
+# Local libs
+import libsvm
+from svmutil import *
 
 def init_arg_parser(parents=[]):
+	'''
+	Initialize an ArgumentParser for this script.
+	
+	Args:
+		parents: A list of ArgumentParsers of other scripts, if there are any.
+		
+	Returns:
+		parser: The ArgumentParsers.
+	'''
 	parser = ArgumentParser(
 		description='Demo SVM of ML_HW05',
 		parents=parents
@@ -35,8 +40,8 @@ def init_arg_parser(parents=[]):
 	parser.add_argument(
 		'--svm_params', '-p',
 		nargs='+',
-		help='Give a set of parameters for each svm model. \n' +
-			'See documentation of LIBSVM for more information \n' +
+		help='Give a set of parameters for each svm model. ' +
+			'See documentation of LIBSVM for more information. ' +
 			'-t 4 => is our custom linear+RBF kernel',
 		default=[
 			'-t 0 -c 4 -b 1',
@@ -49,6 +54,16 @@ def init_arg_parser(parents=[]):
 
 	
 def arrange_subplots(pltc):
+	'''
+	Arranges a given number of plots to well formated subplots.
+	
+	Args:
+		pltc: The number of plots.
+	
+	Returns:
+		fig: The figure.
+		axes: A list of axes of each subplot.
+	'''
 	cols = int(np.floor(np.sqrt(pltc)))
 	rows = int(np.ceil(pltc/cols))
 	return plt.subplots(rows,cols)
