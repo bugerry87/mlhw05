@@ -55,7 +55,7 @@ def init_arg_parser(parents=[]):
 	parser.add_argument(
 		'--subset', '-z',
 		help='Subset for parameter grid search.',
-		default='params/MNIST0-4_YX_sub100.csv'
+		default='MNIST0-4_YX_sub100.csv'
 		)
 	
 	return parser
