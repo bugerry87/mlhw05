@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import libsvm
 from svmutil import *
 from grid import find_parameters
+from kernels import linearRBF
 
 
 def init_arg_parser(parents=[]):
@@ -73,15 +74,15 @@ if __name__ == '__main__':
 	EY = np.genfromtxt(args.eval_labels, delimiter=',')
 
 	print("Find best params via grid search from libsvm...")
-	_, best_params = find_parameters(args.subset, options)
+	#_, best_params = find_parameters(args.subset, options)
 
 	print("Train svm model...")
 	param = svm_parameter()
-	param.kernel_type = 3
-	param.C = best_params['c']
-	param.gamma = best_params['g']
+	param.kernel_type = 4
+	#param.C = best_params['c']
+	#param.gamma = best_params['g']
 	stdout.flush()
-	prob = svm_problem(TY, TX)
+	prob = svm_problem(TY, linearRBF(TX,TX), isKernel=True)
 	m = svm_train(prob, param)
 
 	print("Evaluate svm model...")

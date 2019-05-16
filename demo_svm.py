@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 # Local libs
 import libsvm
 from svmutil import *
+from kernels import linearRBF
 
 def init_arg_parser(parents=[]):
 	'''
@@ -82,13 +83,13 @@ def plot_boundaries(X, m, p, ax, h=1):
 	y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 	xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 	X = np.c_[xx.ravel(), yy.ravel()]
-	options = '-b {}'.format(param.probability)
+	options = '-b {}'.format(p.probability)
 	
 	if p.kernel_type == 4:
-		X = linearRBF(X)
+		X = linearRBF(X,X, p.gamma)
 	
 	# Put the result into a color plot
-	[_, _, Z] = svm_predict([], X, m, options)
+	[_, _, Z] = svm_predict(np.zeros(len(X)), X, m, options)
 	Z = np.array(Z)
 	
 	k = Z.shape[1]
@@ -99,32 +100,6 @@ def plot_boundaries(X, m, p, ax, h=1):
 		plt.axis('tight')
 		cmap = np.tile(c(i**2/k), (10,1)) #keep some colors in backup...
 		ax.contour(xx, yy, z, linewidths=0.5, levels=0, colors=cmap)
-
-
-def linearRBF(X):
-	'''
-	
-	Returns:
-		X: The Gram Matrix.
-	'''
-
-	#https://stackoverflow.com/questions/10978261/libsvm-precomputed-kernels
-	#https://stackoverflow.com/questions/15556116/implementing-support-vector-machine-efficiently-computing-gram-matrix-k
-	s = X.shape
-	index = np.arange(1,s[0]+1)[:,np.newaxis]
-	#norms = (X**2).sum(axis=1)
-	X = np.dot(X, X.T)
-	#X *= -2
-	#X += norms.reshape(-1,1)
-	#X += norms
-	
-	#X *= -0.1**2 / 2
-	#X = np.exp(X,X)
-	
-	X = np.c_[index, X]
-	X = [list(row) for row in X]
-	#TODO: make linear kernel to work, then add RBF
-	return X
 	
 
 if __name__ == '__main__':
@@ -154,7 +129,7 @@ if __name__ == '__main__':
 		prob = None
 		
 		if param.kernel_type == 4: #That's our custom linear+RBF kernel type.
-			prob = svm_problem(Y, linearRBF(X), isKernel=True) #Apply linearRBF kernel to data.
+			prob = svm_problem(Y, linearRBF(X,X, param.gamma), isKernel=True) #Apply linearRBF kernel to data.
 		else:
 			prob = svm_problem(Y, X)
 		
@@ -162,12 +137,14 @@ if __name__ == '__main__':
 		m = svm_train(prob, param)
 		
 		#Get result
+		i = m.get_sv_indices()
 		SV = m.get_SV()
 		SV = np.array([[v[1], v[2]] for v in SV])
 		
 		#Show result
 		plot_boundaries(X, m, param, ax) #Bounds
 		ax.scatter(X[:,0], X[:,1], s=1, c=Y) #GT
+		ax.scatter(X[i,0], X[i,1], s=3, c='b', marker='v')
 		ax.scatter(SV[:,0], SV[:,1], s=3, c='r', marker='v') #SV
 		plt.show(block=False)
 		plt.pause(0.1)
