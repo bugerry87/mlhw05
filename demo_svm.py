@@ -49,7 +49,7 @@ def init_arg_parser(parents=[]):
 			'-t 0 -c 4 -b 1',
 			'-t 1 -c 10 -g 1 -r 1 -d 2',
 			'-t 2 -c 5 -g 0.5 -e 0.1',
-			'-t 4 -c 4'
+			'-t 4 -c 4 -h 0'
 			]
 		)
 	
@@ -74,33 +74,48 @@ def arrange_subplots(pltc):
 		axes = np.array([axes]) #fix format so it can be used consistently.
 	
 	return fig, axes
+
+
+def prediction(X, Y, m, p):
+	options = '-b {}'.format(p.probability)
+	if p.kernel_type == 4:
+		K = linearRBF(X,X, p.gamma)
+	else:
+		K = X
 	
+	# Put the result into a color plot
+	[y, acc, z] = svm_predict(Y, K, m, options)
+	y = np.array(y)
+	z = np.array(z)
+	return y, acc, z
+
 	
 def plot_boundaries(X, m, p, ax, h=1):
-	#http://scikit-learn.sourceforge.net/0.5/auto_examples/svm/plot_iris.html
+	#http://scikit-learn.sourceforge.net/0.5/auto_examples/svm/plot_iris.html	
 	# create a mesh to plot in
 	x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 	y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 	xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 	X = np.c_[xx.ravel(), yy.ravel()]
-	options = '-b {}'.format(p.probability)
-	
-	if p.kernel_type == 4:
-		X = linearRBF(X,X, p.gamma)
 	
 	# Put the result into a color plot
-	[_, _, Z] = svm_predict(np.zeros(len(X)), X, m, options)
-	Z = np.array(Z)
+	_, _, Z = prediction(X, [], m, p)
 	
 	k = Z.shape[1]
 	c = plt.cm.get_cmap()
-	
 	for i,z in enumerate(Z.T):
 		z = z.reshape(xx.shape)
 		plt.axis('tight')
 		cmap = np.tile(c(i**2/k), (10,1)) #keep some colors in backup...
 		ax.contour(xx, yy, z, linewidths=0.5, levels=0, colors=cmap)
-	
+
+
+def plot_prediction(X, Y, m, ax):
+	# Put the result into a color plot
+	i = np.array(m.get_sv_indices()) - 1
+	ax.scatter(X[:,0], X[:,1], s=1, c=Y) #Prediction
+	ax.scatter(X[i,0], X[i,1], s=3, c='r', marker='v') #SV
+
 
 if __name__ == '__main__':
 	#Parse input arguments
@@ -118,7 +133,7 @@ if __name__ == '__main__':
 	
 	for i in range(0,pltc):
 		ax = axes[i]
-		ax.scatter(X[:,0], X[:,1], s=1, c=Y)
+		ax.scatter(X[:,0], X[:,1], s=1, c='gray')
 	plt.show(block=False)
 	plt.pause(0.1)
 	
@@ -137,15 +152,12 @@ if __name__ == '__main__':
 		m = svm_train(prob, param)
 		
 		#Get result
-		i = m.get_sv_indices()
-		SV = m.get_SV()
-		SV = np.array([[v[1], v[2]] for v in SV])
+		y, acc, _ = prediction(X, Y, m, param)
 		
 		#Show result
-		plot_boundaries(X, m, param, ax) #Bounds
-		ax.scatter(X[:,0], X[:,1], s=1, c=Y) #GT
-		ax.scatter(X[i,0], X[i,1], s=3, c='b', marker='v')
-		ax.scatter(SV[:,0], SV[:,1], s=3, c='r', marker='v') #SV
+		if param.kernel_type != 4:
+			plot_boundaries(X, m, param, ax) #Bounds
+		plot_prediction(X, y, m, ax) #Prediction
 		plt.show(block=False)
 		plt.pause(0.1)
 
