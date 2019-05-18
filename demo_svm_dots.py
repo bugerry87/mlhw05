@@ -8,9 +8,9 @@ import scipy.spatial.distance as ssd
 import matplotlib.pyplot as plt
 
 # Local libs
-import libsvm
-from svmutil import *
-from kernels import linearRBF
+from libsvm import *
+from misc import *
+
 
 def init_arg_parser(parents=[]):
 	'''
@@ -56,40 +56,6 @@ def init_arg_parser(parents=[]):
 	return parser
 
 	
-def arrange_subplots(pltc):
-	'''
-	Arranges a given number of plots to well formated subplots.
-	
-	Args:
-		pltc: The number of plots.
-	
-	Returns:
-		fig: The figure.
-		axes: A list of axes of each subplot.
-	'''
-	cols = int(np.floor(np.sqrt(pltc)))
-	rows = int(np.ceil(pltc/cols))
-	fig, axes = plt.subplots(cols,rows)
-	if not isinstance(axes, np.ndarray):
-		axes = np.array([axes]) #fix format so it can be used consistently.
-	
-	return fig, axes
-
-
-def prediction(X, Y, m, p):
-	options = '-b {}'.format(p.probability)
-	if p.kernel_type == 4:
-		K = linearRBF(X,X, p.gamma)
-	else:
-		K = X
-	
-	# Put the result into a color plot
-	[y, acc, z] = svm_predict(Y, K, m, options)
-	y = np.array(y)
-	z = np.array(z)
-	return y, acc, z
-
-	
 def plot_boundaries(X, m, p, ax, h=1):
 	#http://scikit-learn.sourceforge.net/0.5/auto_examples/svm/plot_iris.html	
 	# create a mesh to plot in
@@ -120,7 +86,7 @@ def plot_prediction(X, Y, m, ax):
 if __name__ == '__main__':
 	#Parse input arguments
 	parser = init_arg_parser()
-	args = parser.parse_args()
+	args = parser.parse_known_args()
 	
 	#Load data
 	X = np.genfromtxt(args.data, delimiter=',')
