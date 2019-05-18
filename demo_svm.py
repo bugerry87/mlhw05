@@ -49,7 +49,7 @@ def init_arg_parser(parents=[]):
 			'-t 0 -c 4 -b 1',
 			'-t 1 -c 10 -g 1 -r 1 -d 2',
 			'-t 2 -c 5 -g 0.5 -e 0.1',
-			'-t 4 -c 4 -h 0'
+			'-t 4 -c 4 -h 0 -g 0.5'
 			]
 		)
 	
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 	
 	#Plot GT
 	pltc = len(args.svm_params)
-	fig, axes = arrange_subplots(pltc)
+	_, axes = arrange_subplots(pltc)
 	axes = axes.flatten() #flatten for easier usage.
 	
 	for i in range(0,pltc):
@@ -137,17 +137,21 @@ if __name__ == '__main__':
 	plt.show(block=False)
 	plt.pause(0.1)
 	
+	titles = ("Linear", "Polynomial", "RBF", "Sigmoid", "linear+RBF")
+	
 	#Train svm models
 	for i in range(0,pltc):
 		ax = axes[i]
 		param = svm_parameter(args.svm_params[i])
-		prob = None
+		ax.title.set_text(titles[param.kernel_type])
 		
+		prob = None
 		if param.kernel_type == 4: #That's our custom linear+RBF kernel type.
 			prob = svm_problem(Y, linearRBF(X,X, param.gamma), isKernel=True) #Apply linearRBF kernel to data.
 		else:
 			prob = svm_problem(Y, X)
 		
+		print("\n" + titles[param.kernel_type] + "\n")
 		stdout.flush()
 		m = svm_train(prob, param)
 		
