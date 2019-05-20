@@ -49,7 +49,7 @@ def init_arg_parser(parents=[]):
 			'-t 0 -c 4 -b 1',
 			'-t 1 -c 10 -g 1 -r 1 -d 2',
 			'-t 2 -c 5 -g 0.5 -e 0.1',
-			'-t 4 -c 4 -h 0 -g 0.5'
+			'-t 4 -c 4 -h 0 -g 1'
 			]
 		)
 	
@@ -62,10 +62,16 @@ def plot_boundaries(X, m, p, ax, h=1):
 	x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 	y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 	xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-	X = np.c_[xx.ravel(), yy.ravel()]
+	
+	isKernel = p.kernel_type == 4
+	if isKernel:
+		X = linearRBF(np.c_[xx.ravel(), yy.ravel()],X)
+	else:
+		X = np.c_[xx.ravel(), yy.ravel()]
 	
 	# Put the result into a color plot
-	_, _, Z = prediction(X, [], m, p)
+	_, _, Z = prediction(X, [], m, p, isKernel)
+	Z = np.array(Z)
 	
 	k = Z.shape[1]
 	c = plt.cm.get_cmap()
@@ -86,7 +92,7 @@ def plot_prediction(X, Y, m, ax):
 if __name__ == '__main__':
 	#Parse input arguments
 	parser = init_arg_parser()
-	args = parser.parse_known_args()
+	args, _ = parser.parse_known_args()
 	
 	#Load data
 	X = np.genfromtxt(args.data, delimiter=',')
@@ -125,8 +131,7 @@ if __name__ == '__main__':
 		y, acc, _ = prediction(X, Y, m, param)
 		
 		#Show result
-		if param.kernel_type != 4:
-			plot_boundaries(X, m, param, ax) #Bounds
+		plot_boundaries(X, m, param, ax) #Bounds
 		plot_prediction(X, y, m, ax) #Prediction
 		plt.show(block=False)
 		plt.pause(0.1)

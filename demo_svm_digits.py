@@ -67,7 +67,7 @@ def init_arg_parser(parents=[]):
 		help='Give a set of costs for grid search. ' +
 			'See LIBSVM doc for more information. '
 			'-t 4 => is our custom linear+RBF kernel',
-		default=[1, 2, 4, 8]
+		default=[1, 2, 8]
 		)
 	
 	parser.add_argument(
@@ -85,7 +85,7 @@ def init_arg_parser(parents=[]):
 		nargs='*',
 		help='Give a set of degrees for grid search. ' +
 			'See LIBSVM doc for more information. ',
-		default=[0.125, 0.25, 0.5, 0.75]
+		default=[0.125, 0.25, 0.75]
 		)
 	
 	parser.add_argument(
@@ -94,15 +94,10 @@ def init_arg_parser(parents=[]):
 		nargs='*',
 		help='Give a set of coef0 for grid search. ' +
 			'See LIBSVM doc for more information. ',
-		default=[0, 1, 2]
+		default=[1, 2]
 		)
 	
 	return parser
-
-
-def viz_grid_search(param_str, acc):
-	print("for {}".format(param_str))
-	sys.stdout.flush()
 
 
 def subset(X, Y, samples=100):
@@ -110,6 +105,10 @@ def subset(X, Y, samples=100):
 	return X[i,:], Y[i], i
 
 if __name__ == '__main__':
+	def viz_grid_search(param_str, acc):
+		print("for {}".format(param_str))
+		sys.stdout.flush()
+
 	print("Parse input arguments...")
 	parser = init_arg_parser()
 	args, _ = parser.parse_known_args()
@@ -122,37 +121,40 @@ if __name__ == '__main__':
 	}
 
 	print("Load training data...")
-	X = np.genfromtxt(args.train_data, delimiter=',')
-	Y = np.genfromtxt(args.train_labels, delimiter=',')
-	RBFprob = svm_problem(Y, linearRBF(X,X, g=0.5), isKernel=True)
+	tX = np.genfromtxt(args.train_data, delimiter=',')
+	tY = np.genfromtxt(args.train_labels, delimiter=',')
 
 	print("Find best params on subset...")
-	x, y, _ = subset(X, Y, 100)
+	x, y, _ = subset(tX, tY, 100)
 	param, grid_acc, param_str = grid_search(x, y, param_dict, viz_grid_search)
 
 	print("Train svm model with full set...")
 	stdout.flush()
-	prob = svm_problem(Y, X)
+	prob = svm_problem(tY, tX)
 	m = svm_train(prob, param)
 	
 	print("Load evaluation data...")
-	X = np.genfromtxt(args.eval_data, delimiter=',')
-	Y = np.genfromtxt(args.eval_labels, delimiter=',')
+	eX = np.genfromtxt(args.eval_data, delimiter=',')
+	eY = np.genfromtxt(args.eval_labels, delimiter=',')
 
 	print("Evaluate svm model...")
 	stdout.flush()
-	_, pred_acc, _ = svm_predict(Y, X, m)
+	_, pred_acc, _ = svm_predict(eY, eX, m)
 	print("Parameters: {}".format(param_str))
 	print("Predicted accuracy with evaluation dataset:\n    {}".format(pred_acc))
+	
+	print("Generate linear+RBF kernels")
+	prob = svm_problem(tY, linearRBF(tX,tX, g=0.5), isKernel=True)
+	eK = linearRBF(eX,tX, g=0.5)
 	
 	print("Train linear+RBF...")
 	stdout.flush()
 	param = svm_parameter("-t 4 -c 4 -h 0")
-	m = svm_train(RBFprob, param)
+	m = svm_train(prob, param)
 	
 	print("Evaluate linear+RBF model...")
 	stdout.flush()
-	_, pred_acc, _ = svm_predict(Y, linearRBF(X,X, 0.5), m)
+	_, pred_acc, _ = svm_predict(eY, eK, m)
 	print("Predicted accuracy with evaluation dataset:\n    {}".format(pred_acc))
 	
 	
