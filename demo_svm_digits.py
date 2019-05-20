@@ -4,11 +4,11 @@
 from sys import stdout
 from argparse import ArgumentParser
 import numpy as np
-import scipy.spatial.distance as ssd
 import matplotlib.pyplot as plt
 
 # Local libs
 from libsvm import *
+from misc import *
 
 
 def init_arg_parser(parents=[]):
@@ -22,7 +22,7 @@ def init_arg_parser(parents=[]):
 		parser: The ArgumentParsers.
 	'''
 	parser = ArgumentParser(
-		description='Demo Digits of ML_HW05',
+		description='Demo for Classifying Handwritten Digits 0-4 via SVM',
 		parents=parents
 		)
 	
@@ -67,7 +67,7 @@ def init_arg_parser(parents=[]):
 		help='Give a set of costs for grid search. ' +
 			'See LIBSVM doc for more information. '
 			'-t 4 => is our custom linear+RBF kernel',
-		default=[1, 2, 8]
+		default=[0.01, 2, 8]
 		)
 	
 	parser.add_argument(
@@ -100,16 +100,30 @@ def init_arg_parser(parents=[]):
 	return parser
 
 
-def subset(X, Y, samples=100):
-	i = np.random.choice(range(len(Y)), samples)
-	return X[i,:], Y[i], i
-
 if __name__ == '__main__':
+
+	knames = [
+		"Linear",
+		"Polynomial",
+		"RBF",
+		"Sigmoid",
+		"Linear+RBF"
+		]
+	
+	report = {
+		0:np.array([0]),
+		1:np.array([0]),
+		2:np.array([0]),
+		3:np.array([0]),
+		4:np.array([0])
+		}
+
 	def viz_grid_search(param_str, acc):
+		p = svm_parameter(param_str)
+		report[p.kernel_type] = np.append(report[p.kernel_type], acc)
 		print("for {}".format(param_str))
 		sys.stdout.flush()
 
-	print("Parse input arguments...")
 	parser = init_arg_parser()
 	args, _ = parser.parse_known_args()
 	param_dict = {
@@ -144,12 +158,12 @@ if __name__ == '__main__':
 	print("Predicted accuracy with evaluation dataset:\n    {}".format(pred_acc))
 	
 	print("Generate linear+RBF kernels")
-	prob = svm_problem(tY, linearRBF(tX,tX, g=0.5), isKernel=True)
-	eK = linearRBF(eX,tX, g=0.5)
+	param = svm_parameter("-t 4 -c 4 -g 0.5 -h 0")
+	prob = svm_problem(tY, linearRBF(tX,tX, g=param.gamma), isKernel=True)
+	eK = linearRBF(eX,tX, g=param.gamma)
 	
 	print("Train linear+RBF...")
 	stdout.flush()
-	param = svm_parameter("-t 4 -c 4 -h 0")
 	m = svm_train(prob, param)
 	
 	print("Evaluate linear+RBF model...")
@@ -157,4 +171,6 @@ if __name__ == '__main__':
 	_, pred_acc, _ = svm_predict(eY, eK, m)
 	print("Predicted accuracy with evaluation dataset:\n    {}".format(pred_acc))
 	
-	
+	print("\nCompare kernels:")
+	for k,v in report.items():
+		print("{} Avg-Acc:\n \t {}".format(knames[k], np.mean(v)))

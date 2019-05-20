@@ -4,7 +4,6 @@
 from sys import stdout
 from argparse import ArgumentParser
 import numpy as np
-import scipy.spatial.distance as ssd
 import matplotlib.pyplot as plt
 
 # Local libs
@@ -23,7 +22,7 @@ def init_arg_parser(parents=[]):
 		parser: The ArgumentParsers.
 	'''
 	parser = ArgumentParser(
-		description='Demo SVM of ML_HW05',
+		description='Demo for Clustering 2D-point-clouds via SVM',
 		parents=parents
 		)
 	
@@ -47,7 +46,7 @@ def init_arg_parser(parents=[]):
 			'-t 4 => is our custom linear+RBF kernel',
 		default=[
 			'-t 0 -c 4 -b 1',
-			'-t 1 -c 10 -g 1 -r 1 -d 2',
+			'-t 1 -c 10 -r 1 -d 2',
 			'-t 2 -c 5 -g 0.5 -e 0.1',
 			'-t 4 -c 4 -h 0 -g 1'
 			]

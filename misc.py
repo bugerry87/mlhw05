@@ -2,6 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def subset(X, Y, samples=100):
+	i = np.random.choice(range(len(Y)), samples)
+	return X[i,:], Y[i], i
+
+
 def arrange_subplots(pltc):
 	'''
 	Arranges a given number of plots to well formated subplots.

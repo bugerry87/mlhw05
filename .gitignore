@@ -9,3 +9,6 @@ libsvm-3.23
 *.rar
 *.tar
 *.out
+
+#Rich files
+*.docx
