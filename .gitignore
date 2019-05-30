@@ -3,8 +3,7 @@
 __pycache__
 
 #3rd-party
-libsvm*
-libsvm-3.23
+libsvm-*
 *.zip
 *.rar
 *.tar
